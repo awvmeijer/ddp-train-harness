@@ -1,0 +1,21 @@
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# data & outputs
+data/
+runs/
+checkpoints/
+*.pt
+*.pth
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# os
+.DS_Store

@@ -1,0 +1,36 @@
+# CI on GitHub-hosted runners, which have no GPU. So this workflow proves what
+# it can prove and says so: unit tests, a real 2-process torchrun smoke test
+# over gloo, and that the Docker image builds. It does not and cannot exercise
+# NCCL; that path runs on cluster hardware via slurm/submit.sbatch.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU torch (same version the lock pins)
+        run: pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Distributed smoke test (2 procs, gloo)
+        run: |
+          python -m torch.distributed.run --nproc_per_node 2 src/train.py \
+            --backend gloo --epochs 3 --samples 512
+
+  docker:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (pinned base, pinned deps)
+        run: docker build -t ddp-train-harness .
+      - name: Smoke test inside the container
+        run: docker run --rm ddp-train-harness

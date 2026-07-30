@@ -35,11 +35,14 @@ The same entry point covers every mode; only the backend and launcher change:
 - **Seeds are split by role.** The model seed is identical on every rank so
   initial weights agree without a broadcast; the data seed is offset by rank so
   ranks do not train on identical samples. `make test` asserts both.
-- **The base image is slim Ubuntu, not `nvidia/cuda`.** torch's Linux wheels
-  bundle their own CUDA runtime (the pinned `nvidia-*-cu13` wheels), so a CUDA
-  base image would ship a second, mismatched runtime next to them. Only the
-  host driver matters, and it reaches the container through
-  nvidia-container-toolkit.
+- **The base image is `python:3.11-slim`, not `nvidia/cuda`.** torch's Linux
+  wheels bundle their own CUDA runtime (the pinned `nvidia-*-cu13` wheels), so
+  a CUDA base image would ship a second, mismatched runtime next to them. Only
+  the host driver matters, and it reaches the container through
+  nvidia-container-toolkit. It is also not Ubuntu + apt: Ubuntu 22.04's
+  `python3.11` package is `3.11.0~rc1`, a pre-release that crashes torch's
+  sympy import. CI caught that on the first push, which is precisely what CI
+  on a pinned environment is for.
 - **Everything is pinned.** The base image by digest, every Python dependency
   by exact version in [`requirements.lock`](requirements.lock). The same build
   next year is the same image.

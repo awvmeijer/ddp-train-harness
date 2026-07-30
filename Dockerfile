@@ -1,26 +1,27 @@
-# Slim base on purpose. torch's Linux wheels bundle their own CUDA runtime
-# (the nvidia-*-cu13 wheels pinned in requirements.lock), so a nvidia/cuda base
-# image would ship a second, mismatched CUDA runtime next to them. Only the
-# host driver matters at run time, and that reaches the container through
-# nvidia-container-toolkit (`docker run --gpus all ...`).
+# Slim Python base on purpose, twice over.
+#
+# Not nvidia/cuda: torch's Linux wheels bundle their own CUDA runtime (the
+# nvidia-*-cu13 wheels pinned in requirements.lock), so a CUDA base image
+# would ship a second, mismatched runtime next to them. Only the host driver
+# matters at run time, via nvidia-container-toolkit (`docker run --gpus all`).
+#
+# Not ubuntu + apt python3.11: Ubuntu 22.04's python3.11 package is
+# 3.11.0~rc1, a pre-release that lacks sys.get_int_max_str_digits and crashes
+# torch's sympy import. CI caught that. The official python image is an
+# actual 3.11 release.
 #
 # Pinned by digest, not just tag: the same build next year is the same image.
-FROM ubuntu:22.04@sha256:0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982
+FROM python:3.11-slim-bookworm@sha256:b18992999dbe963a45a8a4da40ac2b1975be1a776d939d098c647482bcad5cba
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3.11 python3-pip \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Dependency layer first, so code edits do not re-download torch.
 COPY requirements.lock .
-RUN python3.11 -m pip install -r requirements.lock
+RUN python -m pip install -r requirements.lock
 
 COPY src/ src/
 COPY tests/ tests/
@@ -31,7 +32,7 @@ USER trainer
 
 # Default command proves the distributed path without any GPU present.
 # Real GPU runs override it:
-#   docker run --gpus all <image> python3.11 -m torch.distributed.run \
+#   docker run --gpus all <image> python -m torch.distributed.run \
 #     --nproc_per_node 4 src/train.py --backend nccl
-CMD ["python3.11", "-m", "torch.distributed.run", "--nproc_per_node", "2", \
+CMD ["python", "-m", "torch.distributed.run", "--nproc_per_node", "2", \
      "src/train.py", "--backend", "gloo", "--epochs", "3"]

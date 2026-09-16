@@ -3,7 +3,7 @@
 > A minimal, reproducible harness for distributed PyTorch training: one script that runs identically under CI, torchrun, Docker, and multi-node Slurm.
 
 [![CI](https://github.com/awvmeijer/ddp-train-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/awvmeijer/ddp-train-harness/actions/workflows/ci.yml)
-[![Portfolio](https://img.shields.io/badge/portfolio-anthonymeijer.dev-262626?style=flat-square)](https://anthonymeijerdev.vercel.app)
+[![Portfolio](https://img.shields.io/badge/portfolio-anthonymeijer.dev-262626?style=flat-square)](https://anthonymeijer.dev)
 
 ## What it does
 
@@ -80,6 +80,6 @@ one JSON result per run; the table fills in from real cluster runs.
 
 ## About
 
-Built by [Anthony Meijer](https://anthonymeijerdev.vercel.app). Companion to my
+Built by [Anthony Meijer](https://anthonymeijer.dev). Companion to my
 work on real-time ML systems, where the same reproducibility discipline is what
 makes a detection pipeline safe to change.
